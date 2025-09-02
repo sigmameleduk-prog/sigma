@@ -1,0 +1,77 @@
+const display = document.getElementById('display');
+const buttons = document.querySelectorAll('.btn');
+
+let current = '';
+let reset = false;
+
+function updateDisplay() {
+    display.textContent = current || '0';
+}
+
+function appendChar(char) {
+    if (reset) {
+        current = '';
+        reset = false;
+    }
+    if (char === '.' && current.endsWith('.')) return;
+    current += char;
+    updateDisplay();
+}
+
+function clearAll() {
+    current = '';
+    updateDisplay();
+}
+
+function backspace() {
+    if (reset) {
+        current = '';
+        reset = false;
+    } else {
+        current = current.slice(0, -1);
+    }
+    updateDisplay();
+}
+
+function calculate() {
+    try {
+        // Avoid eval security issues in real production code!
+        let result = eval(current.replace(/×/g, '*').replace(/÷/g, '/'));
+        current = result.toString();
+        reset = true;
+        updateDisplay();
+    } catch {
+        display.textContent = 'Error';
+        reset = true;
+    }
+}
+
+buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const action = btn.getAttribute('data-action');
+        if (!action) return;
+        if (action === 'clear') {
+            clearAll();
+        } else if (action === 'back') {
+            backspace();
+        } else if (action === '=') {
+            calculate();
+        } else {
+            appendChar(action);
+        }
+    });
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key.match(/[0-9.]/)) {
+        appendChar(e.key);
+    } else if (['+', '-', '*', '/', '×', '÷'].includes(e.key)) {
+        appendChar(e.key === '*' ? '*' : e.key === '/' ? '/' : e.key);
+    } else if (e.key === 'Enter' || e.key === '=') {
+        calculate();
+    } else if (e.key === 'Backspace') {
+        backspace();
+    } else if (e.key.toLowerCase() === 'c') {
+        clearAll();
+    }
+});
